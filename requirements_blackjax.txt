@@ -1,0 +1,16 @@
+# Had to fix these two for aesara to work
+wheel
+numpy
+scipy
+ipykernel
+jupyterlab
+matplotlib
+arviz
+tqdm
+seaborn
+jax
+daft
+git+https://github.com/pymc-devs/pymc@v3
+blackjax
+aesara
+install --upgrade "jax[cpu]"
