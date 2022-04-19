@@ -1,27 +1,8 @@
 import pymc as pm
 import aesara.tensor as at
-from pymc.sampling_jax import get_jaxified_logp
-import blackjax
-import jax
 import logging
 import arviz as az
 import numpy as np
-import xarray as xr
-
-def inference_data(chains, draws, dims, sampling_as_arrays):
-
-    dataset = xr.Dataset(
-        {
-        "a": (["chain", "draw", "X_dim_0"], sampling_as_arrays),
-        },
-    coords = {
-         "chain": (["chain"], np.arange(chains)),
-          "draw": (["draw"], np.arange(draws)),
-          "a_dim": (["a_dim"], np.arange(dims))
-        }
-    )
-    return az.InferenceData(posterior=dataset)
-
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
