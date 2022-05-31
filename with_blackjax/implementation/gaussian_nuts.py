@@ -1,7 +1,10 @@
+"""
+Gaussian model with NUTS sampler
+"""
 from pymc.sampling_jax import get_jaxified_logp
 import blackjax
 import jax
-from blackjax.implementation.gaussian import model, results
+from with_blackjax.implementation.gaussian import model, results
 from utils import inference_data
 
 jax.config.update("jax_platform_name", "cpu")
@@ -40,5 +43,5 @@ id = inference_data(chains=CHAINS,
                     sampling_as_arrays=posterior,
                     rvs=rvs)
 
-results(id, '../results_gaussian_hmc.png')
+results(id, '../results/results_gaussian_hmc.png')
 
