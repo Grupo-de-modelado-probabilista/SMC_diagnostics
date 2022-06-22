@@ -25,7 +25,7 @@ def inference_loop(rng_key, mcmc_kernel, initial_state, num_samples):
     return states
 
 
-logprior  = get_jaxified_logprior(model)
+logprior = get_jaxified_logprior(model)
 loglikelihood = get_jaxified_loglikelihood(model)
 
 inv_mass_matrix = jnp.eye(1)
@@ -76,9 +76,11 @@ tempered = blackjax.adaptive_tempered_smc(
     mcmc_iter=1,
 )
 
-initial_smc_state = jax.random.multivariate_normal(
-    jax.random.PRNGKey(0), jnp.zeros([1]), jnp.eye(1), (n_samples,)
-)
+import numpy as np
+rvs = [rv.name for rv in model.value_vars]
+init_position_dict = model.compute_initial_point()
+initial_smc_state = np.array([[jax.numpy.array(init_position_dict[rv]) for rv in rvs] for _ in range(0, n_samples)])
+
 initial_smc_state = tempered.init(initial_smc_state)
 
 n_iter, smc_samples = smc_inference_loop(key, tempered.step, initial_smc_state)

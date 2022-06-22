@@ -3,26 +3,45 @@ from typing import Callable
 from jax.experimental.host_callback import id_print
 from pymc import Model
 from pymc.sampling_jax import get_jaxified_graph
+import jax
 
 
 def get_jaxified_logprior(model: Model) -> Callable:
     model_logpt = model.varlogpt
     logp_fn = get_jaxified_graph(inputs=model.value_vars, outputs=[model_logpt])
+    from aesara import pp
 
-    def logp_fn_wrap(x):
-        return logp_fn(*x)
+    def logp_fn_wrap(particles):
+        return logp_fn(*particles)[0]
 
     return logp_fn_wrap
 
 
 def get_jaxified_loglikelihood(model: Model) -> Callable:
+    """
+    This is code that we will need to port into PYMC at some point
+    """
     model_logpt = model.datalogpt
     logp_fn = get_jaxified_graph(inputs=model.value_vars, outputs=[model_logpt])
 
-    def logp_fn_wrap(x):
-        to_return = logp_fn(*x)
-        id_print(to_return)
-        return to_return
+    def logp_fn_wrap(particles):
+        """
+        Assuming an x,y posterior, where x in
+         x in R^{10} and y in R^{50}
+        Blackjax operates with a structure like:
+        [ALL_X,ALL_Y]
+        where ALL_X.shape = (n_particles, 10)
+        and ALL_Y.shape =   (n_particles, 50).
+        This function will be applied after vmap.
+        """
+
+        return logp_fn(*particles)[0]
+        #acc_logp = 0.
+        #for particle_index in range(0, len(particles[0])):
+
+        #    acc_logp += logp_fn(*[particles[var_index][particle_index]
+        #                          for var_index in range(0, len(particles))])
+        #return acc_logp
 
     return logp_fn_wrap
 

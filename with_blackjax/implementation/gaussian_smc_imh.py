@@ -15,6 +15,28 @@ from with_blackjax.implementation.utils import get_jaxified_logprior, get_jaxifi
 jax.config.update("jax_platform_name", "cpu")
 n_samples = 10
 
+def proposal(rng, mean, sigma):
+    # TODO:
+    # It would be great to infer
+    # shape not from parameters, but
+    # from the model's properties'
+    # This is similar to the way
+    # it is done in random walk,
+    # is this a jax limitation?
+    #sigma = jnp.array([1.0])
+    ndim = jnp.ndim(sigma)  # type: ignore[arg-type]
+    shape = jnp.shape(jnp.atleast_1d(sigma))[:1]
+
+    if ndim == 1:
+        dot = jnp.multiply
+    elif ndim == 2:
+        dot = jnp.dot
+    else:
+        raise ValueError
+    sample = jax.random.normal(rng, shape) + mean
+    move_sample = dot(sigma, sample)
+    return move_sample
+
 logprior = get_jaxified_logprior(model)
 loglikelihood = get_jaxified_loglikelihood(model)
 
@@ -51,11 +73,12 @@ def smc_inference_loop(rng_key, smc_kernel, initial_state):
     return n_iter, final_state
 
 
+irmh_parameters = {'proposal_distribution': lambda x, y: proposal(rng=x,mean=y, sigma=np.ones(20)*10)}
 tempered = blackjax.adaptive_tempered_smc(
     logprior,
     loglikelihood,
-    blackjax.hmc,
-    hmc_parameters,
+    blackjax.irmh,
+    irmh_parameters,
     resampling.systematic,
     target_ess=0.8,
     mcmc_iter=10
@@ -66,7 +89,6 @@ import numpy as np
 initial_particles = [model.compute_initial_point() for sample in range(0, n_samples)] # this one could be expensive
 initial_smc_state = [np.array([ip[rv] for ip in initial_particles]) for rv in rvs]
 print(initial_smc_state)
-print("Finished generating initial points")
 initial_smc_state = init(initial_smc_state)
 n_iter, smc_samples = smc_inference_loop(key, tempered.step, initial_smc_state)
 print("Number of steps in the adaptive algorithm: ", n_iter.item())
