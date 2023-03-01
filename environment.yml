@@ -1,0 +1,10 @@
+name: smc
+channels:
+  - conda-forge
+dependencies:
+  - jupyter
+  - pip
+  - python-graphviz
+  - python=3.9
+  - pip:
+    - "git+https://github.com/pymc-devs/pymc.git@main"
